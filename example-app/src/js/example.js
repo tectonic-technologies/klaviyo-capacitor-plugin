@@ -1,4 +1,4 @@
-import { TectonicKlaviyo } from 'klaviyo-capacitor-plugin';
+import { TectonicKlaviyo } from '@tectonic-technologies/klaviyo-capacitor-plugin';
 
 window.testEcho = () => {
     const inputValue = document.getElementById("echoInput").value;

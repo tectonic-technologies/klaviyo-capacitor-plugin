@@ -2,5 +2,5 @@
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')
 
-include ':klaviyo-capacitor-plugin'
-project(':klaviyo-capacitor-plugin').projectDir = new File('../../android')
+include ':tectonic-technologies-klaviyo-capacitor-plugin'
+project(':tectonic-technologies-klaviyo-capacitor-plugin').projectDir = new File('../../android')
