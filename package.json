@@ -75,7 +75,6 @@
   "peerDependencies": {
     "@capacitor/core": ">=7.0.0"
   },
-  "prettier": "@ionic/prettier-config",
   "swiftlint": "@ionic/swiftlint-config",
   "capacitor": {
     "ios": {
