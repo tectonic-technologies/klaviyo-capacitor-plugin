@@ -106,6 +106,30 @@ public class TectonicKlaviyo {
             Logger.error("Klaviyo", "Failed to set profile data, error: " + e.getMessage(), e);
         }
     }
+
+    public void setExternalId(String externalId) {
+        try {
+            Logger.debug("Klaviyo", "Setting external ID");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            if (externalId != null && !externalId.isEmpty()) {
+                klaviyo.setExternalId(externalId);
+                Logger.debug("Klaviyo", "External ID set successfully");
+            }
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to set external ID, error: " + e.getMessage(), e);
+        }
+    }
+
+    public String getExternalId() {
+        try {
+            Logger.debug("Klaviyo", "Getting external ID");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            return klaviyo.getExternalId();
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to get external ID, error: " + e.getMessage(), e);
+            return null;
+        }
+    }
     
     private void setLocationAttributes(Klaviyo klaviyo, JSObject location) {
         try {

@@ -37,4 +37,26 @@ public class TectonicKlaviyoPlugin extends Plugin {
         call.resolve();
     }
 
+    @PluginMethod
+    public void setExternalId(PluginCall call) {
+        String externalId = call.getString("externalId");
+        
+        if (externalId == null || externalId.isEmpty()) {
+            call.reject("External ID is required");
+            return;
+        }
+
+        implementation.setExternalId(externalId);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void getExternalId(PluginCall call) {
+        String externalId = implementation.getExternalId();
+        
+        JSObject result = new JSObject();
+        result.put("externalId", externalId);
+        call.resolve(result);
+    }
+
 }
