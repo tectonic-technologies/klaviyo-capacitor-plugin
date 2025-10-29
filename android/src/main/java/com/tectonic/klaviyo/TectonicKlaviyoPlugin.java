@@ -12,11 +12,16 @@ public class TectonicKlaviyoPlugin extends Plugin {
     private TectonicKlaviyo implementation = new TectonicKlaviyo();
 
     @PluginMethod
-    public void echo(PluginCall call) {
-        String value = call.getString("value");
+    public void initialize(PluginCall call) {
+        String apiKey = call.getString("apiKey");
 
-        JSObject ret = new JSObject();
-        ret.put("value", implementation.echo(value));
-        call.resolve(ret);
+        if (apiKey == null || apiKey.isEmpty()) {
+            call.reject("API key is required");
+            return;
+        }
+
+        implementation.initialize(getContext(), apiKey);
+        call.resolve();
     }
+
 }
