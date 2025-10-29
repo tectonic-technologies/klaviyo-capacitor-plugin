@@ -128,4 +128,52 @@ public class TectonicKlaviyoPlugin extends Plugin {
         call.resolve();
     }
 
+    @PluginMethod
+    public void setPushToken(PluginCall call) {
+        String token = call.getString("token");
+        
+        if (token == null || token.isEmpty()) {
+            call.reject("Token is required");
+            return;
+        }
+
+        implementation.setPushToken(token);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void getPushToken(PluginCall call) {
+        String token = implementation.getPushToken();
+        
+        JSObject result = new JSObject();
+        result.put("token", token);
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void setBadgeCount(PluginCall call) {
+        Integer count = call.getInt("count");
+        
+        if (count == null) {
+            call.reject("Count is required");
+            return;
+        }
+
+        implementation.setBadgeCount(count);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void createEvent(PluginCall call) {
+        JSObject eventData = call.getData();
+        
+        if (eventData == null) {
+            call.reject("Event data is required");
+            return;
+        }
+
+        implementation.createEvent(eventData);
+        call.resolve();
+    }
+
 }

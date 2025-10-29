@@ -6,6 +6,8 @@ import androidx.activity.ComponentActivity;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Logger;
 import com.klaviyo.analytics.Klaviyo;
+import com.klaviyo.analytics.model.Event;
+import com.klaviyo.analytics.model.EventKey;
 import com.klaviyo.analytics.model.ProfileKey;
 import org.json.JSONException;
 
@@ -246,6 +248,104 @@ public class TectonicKlaviyo {
             Logger.debug("Klaviyo", "Profile reset successfully");
         } catch (Exception e) {
             Logger.error("Klaviyo", "Failed to reset profile, error: " + e.getMessage(), e);
+        }
+    }
+
+    public void setPushToken(String token) {
+        try {
+            Logger.debug("Klaviyo", "Setting push token");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            if (token != null && !token.isEmpty()) {
+                klaviyo.setPushToken(token);
+                Logger.debug("Klaviyo", "Push token set successfully");
+            }
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to set push token, error: " + e.getMessage(), e);
+        }
+    }
+
+    public String getPushToken() {
+        try {
+            Logger.debug("Klaviyo", "Getting push token");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            return klaviyo.getPushToken();
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to get push token, error: " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    public void setBadgeCount(Integer count) {
+        // setBadgeCount is iOS only, not supported on Android
+        Logger.warn("Klaviyo", "setBadgeCount is not supported on Android (iOS only)");
+    }
+
+    public void createEvent(JSObject eventData) {
+        try {
+            Logger.debug("Klaviyo", "Creating event");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            
+            // Event name is required
+            String eventName = eventData.getString("name");
+            if (eventName == null || eventName.isEmpty()) {
+                Logger.error("Klaviyo", "Event name is required", new IllegalArgumentException("Event name is required"));
+                return;
+            }
+            
+            // Create event with name (using String constructor)
+            Event event = new Event(eventName);
+            
+            // Add value if present
+            if (eventData.has("value")) {
+                // Use getDouble directly since get("value") returns null
+                // getDouble returns primitive double, need to box to Double
+                Double valueObj = eventData.getDouble("value");
+                // Use setProperty with EventKey.VALUE to avoid setValue ambiguity
+                EventKey valueKey = EventKey.VALUE.INSTANCE;
+                event.setProperty(valueKey, valueObj);
+            }
+            
+            // Add uniqueId if present
+            if (eventData.has("uniqueId")) {
+                String uniqueId = eventData.getString("uniqueId");
+                if (uniqueId != null && !uniqueId.isEmpty()) {
+                    // Use setProperty with EventKey.EVENT_ID to avoid setUniqueId ambiguity
+                    EventKey eventIdKey = EventKey.EVENT_ID.INSTANCE;
+                    event.setProperty(eventIdKey, uniqueId);
+                }
+            }
+            
+            // Add properties if present
+            if (eventData.has("properties")) {
+                try {
+                    JSObject properties = eventData.getJSObject("properties");
+                    if (properties != null) {
+                        for (Iterator<String> it = properties.keys(); it.hasNext(); ) {
+                            String key = it.next();
+                            if (key != null && !key.isEmpty()) {
+                                try {
+                                    Object value = properties.get(key);
+                                    // setProperty expects Serializable, so cast Object to Serializable
+                                    if (value instanceof java.io.Serializable) {
+                                        // Use setProperty with String key (will be converted to EventKey.CUSTOM)
+                                        event.setProperty(key, (java.io.Serializable) value);
+                                    }
+                                } catch (JSONException e) {
+                                    Logger.debug("Klaviyo", "Failed to get property value for key: " + key + ", error: " + e.getMessage());
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Logger.error("Klaviyo", "Failed to process event properties, error: " + e.getMessage(), e);
+                }
+            }
+            
+            // Track the event
+            klaviyo.createEvent(event);
+            Logger.debug("Klaviyo", "Event created successfully: " + eventName);
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to create event, error: " + e.getMessage(), e);
         }
     }
     
