@@ -130,6 +130,54 @@ public class TectonicKlaviyo {
             return null;
         }
     }
+
+    public void setEmail(String email) {
+        try {
+            Logger.debug("Klaviyo", "Setting email");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            if (email != null && !email.isEmpty()) {
+                klaviyo.setEmail(email);
+                Logger.debug("Klaviyo", "Email set successfully");
+            }
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to set email, error: " + e.getMessage(), e);
+        }
+    }
+
+    public String getEmail() {
+        try {
+            Logger.debug("Klaviyo", "Getting email");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            return klaviyo.getEmail();
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to get email, error: " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        try {
+            Logger.debug("Klaviyo", "Setting phone number");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            if (phoneNumber != null && !phoneNumber.isEmpty()) {
+                klaviyo.setPhoneNumber(phoneNumber);
+                Logger.debug("Klaviyo", "Phone number set successfully");
+            }
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to set phone number, error: " + e.getMessage(), e);
+        }
+    }
+
+    public String getPhoneNumber() {
+        try {
+            Logger.debug("Klaviyo", "Getting phone number");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            return klaviyo.getPhoneNumber();
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to get phone number, error: " + e.getMessage(), e);
+            return null;
+        }
+    }
     
     private void setLocationAttributes(Klaviyo klaviyo, JSObject location) {
         try {

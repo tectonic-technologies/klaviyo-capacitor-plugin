@@ -59,4 +59,48 @@ public class TectonicKlaviyoPlugin extends Plugin {
         call.resolve(result);
     }
 
+    @PluginMethod
+    public void setEmail(PluginCall call) {
+        String email = call.getString("email");
+        
+        if (email == null || email.isEmpty()) {
+            call.reject("Email is required");
+            return;
+        }
+
+        implementation.setEmail(email);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void getEmail(PluginCall call) {
+        String email = implementation.getEmail();
+        
+        JSObject result = new JSObject();
+        result.put("email", email);
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void setPhoneNumber(PluginCall call) {
+        String phoneNumber = call.getString("phoneNumber");
+        
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            call.reject("Phone number is required");
+            return;
+        }
+
+        implementation.setPhoneNumber(phoneNumber);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void getPhoneNumber(PluginCall call) {
+        String phoneNumber = implementation.getPhoneNumber();
+        
+        JSObject result = new JSObject();
+        result.put("phoneNumber", phoneNumber);
+        call.resolve(result);
+    }
+
 }
