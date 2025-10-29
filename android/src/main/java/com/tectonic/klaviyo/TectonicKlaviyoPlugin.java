@@ -176,4 +176,17 @@ public class TectonicKlaviyoPlugin extends Plugin {
         call.resolve();
     }
 
+    @PluginMethod
+    public void registerForInAppForms(PluginCall call) {
+        JSObject options = call.getData();
+        
+        JSObject configuration = null;
+        if (options != null && options.has("configuration")) {
+            configuration = options.getJSObject("configuration");
+        }
+
+        implementation.registerForInAppForms(configuration);
+        call.resolve();
+    }
+
 }

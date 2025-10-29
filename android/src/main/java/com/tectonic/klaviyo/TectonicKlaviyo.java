@@ -9,6 +9,7 @@ import com.klaviyo.analytics.Klaviyo;
 import com.klaviyo.analytics.model.Event;
 import com.klaviyo.analytics.model.EventKey;
 import com.klaviyo.analytics.model.ProfileKey;
+import com.klaviyo.forms.InAppFormsConfig;
 import org.json.JSONException;
 
 import java.util.Iterator;
@@ -347,6 +348,9 @@ public class TectonicKlaviyo {
         } catch (Exception e) {
             Logger.error("Klaviyo", "Failed to create event, error: " + e.getMessage(), e);
         }
+    }
+
+    public void registerForInAppForms(JSObject configuration) {
     }
     
     private void setLocationAttributes(Klaviyo klaviyo, JSObject location) {
