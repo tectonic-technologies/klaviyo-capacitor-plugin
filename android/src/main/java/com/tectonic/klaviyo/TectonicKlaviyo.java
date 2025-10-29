@@ -351,6 +351,56 @@ public class TectonicKlaviyo {
     }
 
     public void registerForInAppForms(JSObject configuration) {
+        try {
+            Logger.debug("Klaviyo", "Registering for in-app forms");
+            
+            // Extract sessionTimeoutDuration if provided
+            Long sessionTimeoutSeconds = null;
+            if (configuration != null && configuration.has("sessionTimeoutDuration")) {
+                try {
+                    sessionTimeoutSeconds = configuration.getLong("sessionTimeoutDuration");
+                    if (sessionTimeoutSeconds <= 0) {
+                        Logger.warn("Klaviyo", "sessionTimeoutDuration must be greater than 0, using default config.");
+                        sessionTimeoutSeconds = null;
+                    }
+                } catch (JSONException e) {
+                    Logger.warn("Klaviyo", "Failed to parse sessionTimeoutDuration: " + e.getMessage() + ", using default config.");
+                }
+            }
+            
+            // ============================================================================
+            // NOTE: Java-Kotlin Interoperability Workaround
+            // ============================================================================
+            // The Klaviyo SDK's InAppFormsConfig class cannot be instantiated directly from
+            // Java because:
+            // 1. Its constructor uses Kotlin's Duration type (e.g., 30.minutes), which requires
+            //    Kotlin extension functions that aren't accessible from Java.
+            // 2. The constructors that accept Duration are private or require Kotlin-specific types.
+            //
+            // SOLUTION: We use a Kotlin helper function (InAppFormsConfigHelper.kt) to create
+            // the config instance. This helper:
+            // - Accepts a simple Java Long (seconds)
+            // - Converts it to Kotlin Duration using .seconds extension
+            // - Creates InAppFormsConfig with proper Kotlin types
+            // - Is callable from Java as InAppFormsConfigHelperKt.createInAppFormsConfig()
+            //
+            // This is a standard Android pattern when mixing Java and Kotlin, and is necessary
+            // because the Klaviyo SDK is Kotlin-first. Since the SDK itself depends on Kotlin,
+            // this approach adds minimal overhead while providing full functionality.
+            //
+            // See InAppFormsConfigHelper.kt for detailed explanation of why this approach was
+            // chosen over alternatives (reflection, ignoring config, etc.).
+            // ============================================================================
+            InAppFormsConfig config = InAppFormsConfigHelperKt.createInAppFormsConfig(sessionTimeoutSeconds);
+
+            // Register for in-app forms using Klaviyo SDK
+            // registerForInAppForms is a Kotlin extension function, call via generated Java wrapper class
+            Klaviyo klaviyo = getKlaviyoInstance();
+            com.klaviyo.forms.InAppFormsKt.registerForInAppForms(klaviyo, config);
+            Logger.debug("Klaviyo", "Registered for in-app forms successfully");
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to register for in-app forms, error: " + e.getMessage(), e);
+        }
     }
     
     private void setLocationAttributes(Klaviyo klaviyo, JSObject location) {
