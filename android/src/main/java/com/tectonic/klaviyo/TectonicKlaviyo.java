@@ -237,6 +237,17 @@ public class TectonicKlaviyo {
             Logger.error("Klaviyo", "Failed to set profile attribute: " + propertyKey + ", error: " + e.getMessage(), e);
         }
     }
+
+    public void resetProfile() {
+        try {
+            Logger.debug("Klaviyo", "Resetting profile");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            klaviyo.resetProfile();
+            Logger.debug("Klaviyo", "Profile reset successfully");
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to reset profile, error: " + e.getMessage(), e);
+        }
+    }
     
     private void setLocationAttributes(Klaviyo klaviyo, JSObject location) {
         try {

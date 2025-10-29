@@ -122,4 +122,10 @@ public class TectonicKlaviyoPlugin extends Plugin {
         call.resolve();
     }
 
+    @PluginMethod
+    public void resetProfile(PluginCall call) {
+        implementation.resetProfile();
+        call.resolve();
+    }
+
 }
