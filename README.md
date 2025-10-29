@@ -9,11 +9,26 @@ npm install klaviyo-capacitor-plugin
 npx cap sync
 ```
 
+### Android
+
+Add following in applications settings.gradle
+
+```
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+    }
+}
+```
+
 ## API
 
 <docgen-index>
 
-* [`echo(...)`](#echo)
+- [`echo(...)`](#echo)
 
 </docgen-index>
 
@@ -32,6 +47,6 @@ echo(options: { value: string; }) => Promise<{ value: string; }>
 
 **Returns:** <code>Promise&lt;{ value: string; }&gt;</code>
 
---------------------
+---
 
 </docgen-api>
