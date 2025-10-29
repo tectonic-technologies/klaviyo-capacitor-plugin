@@ -1,19 +1,52 @@
 package com.tectonic.klaviyo;
 
 import android.content.Context;
-import android.app.Activity;
 import androidx.activity.ComponentActivity;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Logger;
 import com.klaviyo.analytics.Klaviyo;
+import com.klaviyo.analytics.model.ProfileKey;
+import org.json.JSONException;
+
+import java.util.Iterator;
 
 public class TectonicKlaviyo {
 
     private Klaviyo getKlaviyoInstance() {
-        // The Klaviyo instance is a singleton
-        // Klaviyo klaviyo = Klaviyo.getInstance();
         return Klaviyo.INSTANCE;
+    }
+
+    private void setAttributeIfPresent(Klaviyo klaviyo, JSObject data, String key, ProfileKey profileKey) {
+        try {
+            if (data.has(key)) {
+                String value = data.getString(key);
+                if (value != null && !value.isEmpty()) {
+                    klaviyo.setProfileAttribute(profileKey, value);
+                }
+            }
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to set profile attribute: " + key + ", error: " + e.getMessage(), e);
+        }
+    }
+
+    private void setIdentifierIfPresent(Klaviyo klaviyo, JSObject data, String key, String methodName) {
+        try {
+            if (data.has(key)) {
+                String value = data.getString(key);
+                if (value != null && !value.isEmpty()) {
+                    if ("externalId".equals(methodName)) {
+                        klaviyo.setExternalId(value);
+                    } else if ("email".equals(methodName)) {
+                        klaviyo.setEmail(value);
+                    } else if ("phoneNumber".equals(methodName)) {
+                        klaviyo.setPhoneNumber(value);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to set identifier: " + key + ", error: " + e.getMessage(), e);
+        }
     }
 
     public void initialize(Context context, String apiKey) {
@@ -25,5 +58,96 @@ public class TectonicKlaviyo {
         Klaviyo klaviyo = getKlaviyoInstance();
         klaviyo.initialize(apiKey, context);
         Logger.debug("Klaviyo", "Klaviyo SDK initialized successfully");
+    }
+
+    public void setProfile(JSObject profileData) {
+        try {
+            Logger.debug("Klaviyo", "Setting profile data");
+            Klaviyo klaviyo = getKlaviyoInstance();
+            
+            // Set identifiers using helper method
+            setIdentifierIfPresent(klaviyo, profileData, "externalId", "externalId");
+            setIdentifierIfPresent(klaviyo, profileData, "email", "email");
+            setIdentifierIfPresent(klaviyo, profileData, "phoneNumber", "phoneNumber");
+            
+            // Set profile attributes using helper method
+            setAttributeIfPresent(klaviyo, profileData, "firstName", ProfileKey.FIRST_NAME.INSTANCE);
+            setAttributeIfPresent(klaviyo, profileData, "lastName", ProfileKey.LAST_NAME.INSTANCE);
+            setAttributeIfPresent(klaviyo, profileData, "title", ProfileKey.TITLE.INSTANCE);
+            setAttributeIfPresent(klaviyo, profileData, "organization", ProfileKey.ORGANIZATION.INSTANCE);
+            setAttributeIfPresent(klaviyo, profileData, "image", ProfileKey.IMAGE.INSTANCE);
+            
+            // Set location if present
+            try {
+                if (profileData.has("location")) {
+                    JSObject location = profileData.getJSObject("location");
+                    if (location != null) {
+                        setLocationAttributes(klaviyo, location);
+                    }
+                }
+            } catch (Exception e) {
+                Logger.error("Klaviyo", "Failed to set location data, error: " + e.getMessage(), e);
+            }
+            
+            // Set custom properties
+            try {
+                if (profileData.has("properties")) {
+                    JSObject properties = profileData.getJSObject("properties");
+                    if (properties != null) {
+                        setCustomProperties(klaviyo, properties);
+                    }
+                }
+            } catch (Exception e) {
+                Logger.error("Klaviyo", "Failed to set custom properties, error: " + e.getMessage(), e);
+            }
+            
+            Logger.debug("Klaviyo", "Profile data set successfully");
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to set profile data, error: " + e.getMessage(), e);
+        }
+    }
+    
+    private void setLocationAttributes(Klaviyo klaviyo, JSObject location) {
+        try {
+            setAttributeIfPresent(klaviyo, location, "address1", ProfileKey.ADDRESS1.INSTANCE);
+            setAttributeIfPresent(klaviyo, location, "address2", ProfileKey.ADDRESS2.INSTANCE);
+            setAttributeIfPresent(klaviyo, location, "city", ProfileKey.CITY.INSTANCE);
+            setAttributeIfPresent(klaviyo, location, "region", ProfileKey.REGION.INSTANCE);
+            setAttributeIfPresent(klaviyo, location, "zip", ProfileKey.ZIP.INSTANCE);
+            setAttributeIfPresent(klaviyo, location, "country", ProfileKey.COUNTRY.INSTANCE);
+            setAttributeIfPresent(klaviyo, location, "timezone", ProfileKey.TIMEZONE.INSTANCE);
+            setAttributeIfPresent(klaviyo, location, "latitude", ProfileKey.LATITUDE.INSTANCE);
+            setAttributeIfPresent(klaviyo, location, "longitude", ProfileKey.LONGITUDE.INSTANCE);
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to set location attributes, error: " + e.getMessage(), e);
+        }
+    }
+    
+    private void setCustomProperties(Klaviyo klaviyo, JSObject properties) {
+        // Iterate through all keys in the properties object
+        for (Iterator<String> it = properties.keys(); it.hasNext(); ) {
+            String key = it.next();
+            if (key == null || key.isEmpty()) {
+                continue;
+            }
+            try {
+                if (properties.has(key)) {
+                    Object value = properties.get(key);
+                    String valueStr = value.toString();
+                    if (!valueStr.isEmpty()) {
+                        try {
+                            ProfileKey customKey = new ProfileKey.CUSTOM(key);
+                            klaviyo.setProfileAttribute(customKey, valueStr);
+                        } catch (Exception e) {
+                            Logger.error("Klaviyo", "Failed to set custom property: " + key + ", error: " + e.getMessage(), e);
+                        }
+                    }
+                }
+            } catch (JSONException e) {
+                Logger.error("Klaviyo", "Failed to get property value for key: " + key + ", error: " + e.getMessage(), e);
+            } catch (Exception e) {
+                Logger.error("Klaviyo", "Unexpected error processing custom property: " + key + ", error: " + e.getMessage(), e);
+            }
+        }
     }
 }

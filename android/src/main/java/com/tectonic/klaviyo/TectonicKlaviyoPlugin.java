@@ -24,4 +24,17 @@ public class TectonicKlaviyoPlugin extends Plugin {
         call.resolve();
     }
 
+    @PluginMethod
+    public void setProfile(PluginCall call) {
+        JSObject profileData = call.getData();
+        
+        if (profileData == null) {
+            call.reject("Profile data is required");
+            return;
+        }
+
+        implementation.setProfile(profileData);
+        call.resolve();
+    }
+
 }
