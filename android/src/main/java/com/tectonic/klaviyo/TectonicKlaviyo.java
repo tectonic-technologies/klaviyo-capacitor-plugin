@@ -178,6 +178,65 @@ public class TectonicKlaviyo {
             return null;
         }
     }
+
+    private ProfileKey getProfileKey(String propertyKey) {
+        // Map standard attribute keys to ProfileKey constants
+        if ("firstName".equals(propertyKey) || "first_name".equals(propertyKey)) {
+            return ProfileKey.FIRST_NAME.INSTANCE;
+        } else if ("lastName".equals(propertyKey) || "last_name".equals(propertyKey)) {
+            return ProfileKey.LAST_NAME.INSTANCE;
+        } else if ("title".equals(propertyKey)) {
+            return ProfileKey.TITLE.INSTANCE;
+        } else if ("organization".equals(propertyKey)) {
+            return ProfileKey.ORGANIZATION.INSTANCE;
+        } else if ("image".equals(propertyKey)) {
+            return ProfileKey.IMAGE.INSTANCE;
+        } else if ("address1".equals(propertyKey)) {
+            return ProfileKey.ADDRESS1.INSTANCE;
+        } else if ("address2".equals(propertyKey)) {
+            return ProfileKey.ADDRESS2.INSTANCE;
+        } else if ("city".equals(propertyKey)) {
+            return ProfileKey.CITY.INSTANCE;
+        } else if ("region".equals(propertyKey)) {
+            return ProfileKey.REGION.INSTANCE;
+        } else if ("zip".equals(propertyKey)) {
+            return ProfileKey.ZIP.INSTANCE;
+        } else if ("country".equals(propertyKey)) {
+            return ProfileKey.COUNTRY.INSTANCE;
+        } else if ("timezone".equals(propertyKey)) {
+            return ProfileKey.TIMEZONE.INSTANCE;
+        } else if ("latitude".equals(propertyKey)) {
+            return ProfileKey.LATITUDE.INSTANCE;
+        } else if ("longitude".equals(propertyKey)) {
+            return ProfileKey.LONGITUDE.INSTANCE;
+        }
+        // For any other key, use CUSTOM
+        return new ProfileKey.CUSTOM(propertyKey);
+    }
+
+    public void setProfileAttribute(String propertyKey, String value) {
+        try {
+            Logger.debug("Klaviyo", "Setting profile attribute: " + propertyKey);
+            Klaviyo klaviyo = getKlaviyoInstance();
+            
+            if (propertyKey == null || propertyKey.isEmpty()) {
+                Logger.error("Klaviyo", "Property key cannot be null or empty", new IllegalArgumentException("Property key cannot be null or empty"));
+                return;
+            }
+            
+            if (value == null || value.isEmpty()) {
+                Logger.debug("Klaviyo", "Value is null or empty, skipping profile attribute: " + propertyKey);
+                return;
+            }
+            
+            // Get the appropriate ProfileKey (standard or custom)
+            ProfileKey key = getProfileKey(propertyKey);
+            klaviyo.setProfileAttribute(key, value);
+            Logger.debug("Klaviyo", "Profile attribute set successfully: " + propertyKey);
+        } catch (Exception e) {
+            Logger.error("Klaviyo", "Failed to set profile attribute: " + propertyKey + ", error: " + e.getMessage(), e);
+        }
+    }
     
     private void setLocationAttributes(Klaviyo klaviyo, JSObject location) {
         try {

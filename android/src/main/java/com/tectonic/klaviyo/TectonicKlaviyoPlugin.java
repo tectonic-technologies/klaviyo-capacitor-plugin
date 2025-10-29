@@ -103,4 +103,23 @@ public class TectonicKlaviyoPlugin extends Plugin {
         call.resolve(result);
     }
 
+    @PluginMethod
+    public void setProfileAttribute(PluginCall call) {
+        String propertyKey = call.getString("propertyKey");
+        String value = call.getString("value");
+        
+        if (propertyKey == null || propertyKey.isEmpty()) {
+            call.reject("Property key is required");
+            return;
+        }
+        
+        if (value == null) {
+            call.reject("Value is required");
+            return;
+        }
+
+        implementation.setProfileAttribute(propertyKey, value);
+        call.resolve();
+    }
+
 }
