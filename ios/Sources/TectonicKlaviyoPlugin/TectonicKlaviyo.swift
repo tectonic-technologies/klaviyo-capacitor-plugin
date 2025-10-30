@@ -90,4 +90,90 @@ import KlaviyoSwift
         // Final dispatch to SDK
         KlaviyoSDK().set(profile: profileModel)
     }
+
+    @objc public func setExternalId(_ externalId: String) {
+        let value = externalId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else {
+            NSLog("Klaviyo setExternalId called with empty value; skipping")
+            return
+        }
+        KlaviyoSDK().set(externalId: value)
+    }
+
+    @objc public func getExternalId() -> String? {
+        return KlaviyoSDK().externalId
+    }
+
+    @objc public func setEmail(_ email: String) {
+        let value = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else {
+            NSLog("Klaviyo setEmail called with empty value; skipping")
+            return
+        }
+        KlaviyoSDK().set(email: value)
+    }
+
+    @objc public func getEmail() -> String? {
+        return KlaviyoSDK().email
+    }
+
+    @objc public func setPhoneNumber(_ phoneNumber: String) {
+        let value = phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else {
+            NSLog("Klaviyo setPhoneNumber called with empty value; skipping")
+            return
+        }
+        KlaviyoSDK().set(phoneNumber: value)
+    }
+
+    @objc public func getPhoneNumber() -> String? {
+        return KlaviyoSDK().phoneNumber
+    }
+
+    @objc public func setProfileAttribute(_ propertyKey: String, value: Any) {
+        let key = propertyKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty else {
+            NSLog("Klaviyo setProfileAttribute called with empty propertyKey; skipping")
+            return
+        }
+
+        // Map common keys to Profile.ProfileKey
+        let attributeKey: Profile.ProfileKey
+        switch key {
+        case "firstName", "first_name": attributeKey = .firstName
+        case "lastName", "last_name": attributeKey = .lastName
+        case "title": attributeKey = .title
+        case "organization": attributeKey = .organization
+        case "image": attributeKey = .image
+        case "address1": attributeKey = .address1
+        case "address2": attributeKey = .address2
+        case "city": attributeKey = .city
+        case "region": attributeKey = .region
+        case "zip": attributeKey = .zip
+        case "country": attributeKey = .country
+        case "timezone": attributeKey = .custom(customKey: "timezone")
+        case "latitude": attributeKey = .latitude
+        case "longitude": attributeKey = .longitude
+        default:
+            attributeKey = .custom(customKey: key)
+        }
+
+        // Allow JSON-safe primitives only
+        switch value {
+        case let s as String:
+            guard !s.isEmpty else { return }
+            KlaviyoSDK().set(profileAttribute: attributeKey, value: s)
+        case let n as NSNumber:
+            KlaviyoSDK().set(profileAttribute: attributeKey, value: n)
+        case let b as Bool:
+            KlaviyoSDK().set(profileAttribute: attributeKey, value: b)
+        default:
+            // Unsupported type, skip
+            return
+        }
+    }
+
+    @objc public func resetProfile() {
+        KlaviyoSDK().resetProfile()
+    }
 }
