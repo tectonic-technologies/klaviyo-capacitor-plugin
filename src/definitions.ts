@@ -1,3 +1,9 @@
+// Events emitted by the native plugin
+type TectonicKlaviyoEvent = 'klaviyoDeepLink';
+
+// Payloads for each event
+type TectonicKlaviyoDeepLinkEventPayload = { uri: string };
+
 type KlaviyoFormConfiguration = {
   sessionTimeoutDuration: number;
 };
@@ -244,6 +250,18 @@ type TectonicKlaviyoPlugin = {
   handleUniversalTrackingLink(options: {
     trackingLink: string | null;
   }): Promise<{ handled: boolean }>;
+
+  /**
+   * Register a deep link handler. The plugin will emit a `deepLink` event
+   * with payload `{ uri: string }` whenever the SDK provides a deep link
+   * from push, forms, or universal tracking links.
+   */
+  registerDeepLinkHandler(): Promise<void>;
+
+  /**
+   * Unregister the native deep link handler.
+   */
+  unregisterDeepLinkHandler(): Promise<void>;
 };
 
 export type {
@@ -253,5 +271,7 @@ export type {
   KlaviyoLocation,
   KlaviyoProfile,
   KlaviyoProfileProperties,
+  TectonicKlaviyoDeepLinkEventPayload,
+  TectonicKlaviyoEvent,
   TectonicKlaviyoPlugin
 };

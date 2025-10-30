@@ -12,8 +12,8 @@ import com.klaviyo.forms.InAppFormsConfig
 import com.klaviyo.forms.registerForInAppForms
 import com.klaviyo.forms.unregisterFromInAppForms
 import android.content.Intent
+import android.net.Uri
 import kotlin.time.Duration.Companion.seconds
-import androidx.core.net.toUri
 
 class TectonicKlaviyo {
 
@@ -358,45 +358,45 @@ class TectonicKlaviyo {
         }
     }
 
-    fun handleUniversalTrackingLink(trackingLink: String?, context: Context): Boolean {
+    fun registerDeepLinkHandler(handler: (uri: Uri) -> Unit) {
         try {
-            Logger.debug("Klaviyo", "Handling universal tracking link: $trackingLink")
-            
-            if (trackingLink.isNullOrEmpty()) {
-                Logger.debug("Klaviyo", "Tracking link is null or empty")
-                return false
+            Logger.debug("Klaviyo", "Registering deep link handler")
+            Klaviyo.registerDeepLinkHandler { uri ->
+                try {
+                    handler(uri)
+                } catch (inner: Exception) {
+                    Logger.error("Klaviyo", "Error in deep link handler callback: ${inner.message}", inner)
+                }
             }
+            Logger.debug("Klaviyo", "Deep link handler registered")
+        } catch (e: Exception) {
+            Logger.error("Klaviyo", "Failed to register deep link handler, error: ${e.message}", e)
+        }
+    }
 
-            // Validate Klaviyo universal tracking link format
-            // Must use HTTPS and path starts with '/u/'
-            val uri = trackingLink.toUri()
-            if (uri.scheme != "https") {
-                Logger.debug("Klaviyo", "Tracking link must use HTTPS protocol")
-                return false
-            }
+    fun unregisterDeepLinkHandler() {
+        try {
+            Logger.debug("Klaviyo", "Unregistering deep link handler")
+            Klaviyo.unregisterDeepLinkHandler()
+            Logger.debug("Klaviyo", "Deep link handler unregistered")
+        } catch (e: Exception) {
+            Logger.error("Klaviyo", "Failed to unregister deep link handler, error: ${e.message}", e)
+        }
+    }
 
-            val path = uri.path
-            if (path == null || !path.startsWith("/u/")) {
-                Logger.debug("Klaviyo", "Tracking link path must start with '/u/'")
-                return false
-            }
-
-            // Create an intent to handle the link
-            // The Klaviyo SDK may handle this internally, but we'll use Android's Intent system
-            // to open the resolved URL
-            try {
-                val intent = Intent(Intent.ACTION_VIEW, uri)
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(intent)
-                Logger.debug("Klaviyo", "Successfully handled universal tracking link")
-                return true
-            } catch (e: Exception) {
-                Logger.error("Klaviyo", "Failed to start activity for tracking link, error: ${e.message}", e)
-                return false
+    fun handleUniversalTrackingLink(intent: Intent?): Boolean {
+        return try {
+            Logger.debug("Klaviyo", "Handling universal tracking link via SDK")
+            if (Klaviyo.handleUniversalTrackingLink(intent)) {
+                Logger.debug("Klaviyo", "Klaviyo SDK accepted universal tracking link")
+                true
+            } else {
+                Logger.debug("Klaviyo", "Klaviyo SDK did not handle universal tracking link")
+                false
             }
         } catch (e: Exception) {
             Logger.error("Klaviyo", "Failed to handle universal tracking link, error: ${e.message}", e)
-            return false
+            false
         }
     }
     

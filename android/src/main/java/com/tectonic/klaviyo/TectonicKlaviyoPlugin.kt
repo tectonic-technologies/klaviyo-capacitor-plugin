@@ -198,18 +198,28 @@ class TectonicKlaviyoPlugin : Plugin() {
 
     @PluginMethod
     fun handleUniversalTrackingLink(call: PluginCall) {
-        val options = call.data
-        val trackingLink = if (options != null && options.has("trackingLink")) {
-            options.getString("trackingLink")
-        } else {
-            null
-        }
-
-        val handled = implementation.handleUniversalTrackingLink(trackingLink, context)
+        // Ignore provided trackingLink on Android; use the current Activity intent per SDK docs
+        val handled = implementation.handleUniversalTrackingLink(bridge.activity?.intent)
         
         val result = JSObject()
         result.put("handled", handled)
         call.resolve(result)
+    }
+
+    @PluginMethod
+    fun registerDeepLinkHandler(call: PluginCall) {
+        implementation.registerDeepLinkHandler { uri ->
+            val payload = JSObject()
+            payload.put("uri", uri.toString())
+            notifyListeners("klaviyoDeepLink", payload)
+        }
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun unregisterDeepLinkHandler(call: PluginCall) {
+        implementation.unregisterDeepLinkHandler()
+        call.resolve()
     }
 
 }

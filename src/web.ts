@@ -101,6 +101,20 @@ class TectonicKlaviyoWeb extends WebPlugin implements TectonicKlaviyoPlugin {
     console.log('Klaviyo handleUniversalTrackingLink (web)', options);
     return { handled: false };
   }
+
+  async registerDeepLinkHandler(): Promise<void> {
+    console.log('Klaviyo registerDeepLinkHandler (web)');
+    throw this.unimplemented(
+      'registerDeepLinkHandler is not implemented on web'
+    );
+  }
+
+  async unregisterDeepLinkHandler(): Promise<void> {
+    console.log('Klaviyo unregisterDeepLinkHandler (web)');
+    throw this.unimplemented(
+      'unregisterDeepLinkHandler is not implemented on web'
+    );
+  }
 }
 
 export { TectonicKlaviyoWeb };
