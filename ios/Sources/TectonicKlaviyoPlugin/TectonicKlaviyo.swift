@@ -176,4 +176,68 @@ import KlaviyoSwift
     @objc public func resetProfile() {
         KlaviyoSDK().resetProfile()
     }
+
+    @objc public func setPushToken(_ token: String) {
+        let value = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else {
+            NSLog("Klaviyo setPushToken called with empty token; skipping")
+            return
+        }
+        KlaviyoSDK().set(pushToken: value)
+    }
+
+    @objc public func getPushToken() -> String? {
+        return KlaviyoSDK().pushToken
+    }
+
+    @objc public func setBadgeCount(_ count: Int) {
+        KlaviyoSDK().setBadgeCount(count)
+    }
+
+    @objc public func createEvent(_ event: [String: Any]) {
+        guard let rawName = event["name"] as? String else {
+            NSLog("Klaviyo createEvent called without name; skipping")
+            return
+        }
+        let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else {
+            NSLog("Klaviyo createEvent called with empty name; skipping")
+            return
+        }
+
+        // Optional value and uniqueId
+        var finalProperties: [String: Any] = [:]
+        var valueDouble: Double? = nil
+        if let props = event["properties"] as? [String: Any] {
+            for (k, v) in props {
+                let key = k.trimmingCharacters(in: .whitespacesAndNewlines)
+                if key.isEmpty { continue }
+                switch v {
+                case let s as String where !s.isEmpty:
+                    finalProperties[key] = s
+                case let n as NSNumber:
+                    finalProperties[key] = n
+                case let b as Bool:
+                    finalProperties[key] = b
+                default:
+                    continue
+                }
+            }
+        }
+
+        if let valueNum = event["value"] as? NSNumber {
+            valueDouble = valueNum.doubleValue
+        } else if let v = event["value"] as? Double {
+            valueDouble = v
+        }
+
+        let uniqueId = (event["uniqueId"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let finalUniqueId = (uniqueId?.isEmpty == false) ? uniqueId : nil
+
+        let eventModel = Event(name: .customEvent(name),
+                               properties: finalProperties.isEmpty ? nil : finalProperties,
+                               value: valueDouble,
+                               uniqueId: finalUniqueId)
+        KlaviyoSDK().create(event: eventModel)
+    }
 }

@@ -19,7 +19,11 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setPhoneNumber", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getPhoneNumber", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setProfileAttribute", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "resetProfile", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "resetProfile", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setPushToken", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getPushToken", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setBadgeCount", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "createEvent", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = TectonicKlaviyo()
 
@@ -99,6 +103,34 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func resetProfile(_ call: CAPPluginCall) {
         implementation.resetProfile()
+        call.resolve()
+    }
+
+    @objc func setPushToken(_ call: CAPPluginCall) {
+        guard let token = call.getString("token"), !token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            call.reject("token is required")
+            return
+        }
+        implementation.setPushToken(token)
+        call.resolve()
+    }
+
+    @objc func getPushToken(_ call: CAPPluginCall) {
+        call.resolve(["token": implementation.getPushToken() as Any])
+    }
+
+    @objc func setBadgeCount(_ call: CAPPluginCall) {
+        guard let count = call.getInt("count") else {
+            call.reject("count is required")
+            return
+        }
+        implementation.setBadgeCount(count)
+        call.resolve()
+    }
+
+    @objc func createEvent(_ call: CAPPluginCall) {
+        let payload = call.options as? [String: Any] ?? [:]
+        implementation.createEvent(payload)
         call.resolve()
     }
 }
