@@ -190,5 +190,27 @@ class TectonicKlaviyoPlugin : Plugin() {
         call.resolve()
     }
 
+    @PluginMethod
+    fun unregisterFromInAppForms(call: PluginCall) {
+        implementation.unregisterFromInAppForms()
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun handleUniversalTrackingLink(call: PluginCall) {
+        val options = call.data
+        val trackingLink = if (options != null && options.has("trackingLink")) {
+            options.getString("trackingLink")
+        } else {
+            null
+        }
+
+        val handled = implementation.handleUniversalTrackingLink(trackingLink, context)
+        
+        val result = JSObject()
+        result.put("handled", handled)
+        call.resolve(result)
+    }
+
 }
 

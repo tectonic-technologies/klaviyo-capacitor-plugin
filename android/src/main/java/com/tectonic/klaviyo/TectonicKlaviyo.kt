@@ -10,7 +10,10 @@ import com.klaviyo.analytics.model.EventKey
 import com.klaviyo.analytics.model.ProfileKey
 import com.klaviyo.forms.InAppFormsConfig
 import com.klaviyo.forms.registerForInAppForms
+import com.klaviyo.forms.unregisterFromInAppForms
+import android.content.Intent
 import kotlin.time.Duration.Companion.seconds
+import androidx.core.net.toUri
 
 class TectonicKlaviyo {
 
@@ -102,7 +105,7 @@ class TectonicKlaviyo {
     fun setExternalId(externalId: String) {
         try {
             Logger.debug("Klaviyo", "Setting external ID")
-            if (!externalId.isNullOrEmpty()) {
+            if (externalId.isNotEmpty()) {
                 Klaviyo.setExternalId(externalId)
                 Logger.debug("Klaviyo", "External ID set successfully")
             }
@@ -124,7 +127,7 @@ class TectonicKlaviyo {
     fun setEmail(email: String) {
         try {
             Logger.debug("Klaviyo", "Setting email")
-            if (!email.isNullOrEmpty()) {
+            if (email.isNotEmpty()) {
                 Klaviyo.setEmail(email)
                 Logger.debug("Klaviyo", "Email set successfully")
             }
@@ -146,7 +149,7 @@ class TectonicKlaviyo {
     fun setPhoneNumber(phoneNumber: String) {
         try {
             Logger.debug("Klaviyo", "Setting phone number")
-            if (!phoneNumber.isNullOrEmpty()) {
+            if (phoneNumber.isNotEmpty()) {
                 Klaviyo.setPhoneNumber(phoneNumber)
                 Logger.debug("Klaviyo", "Phone number set successfully")
             }
@@ -167,21 +170,21 @@ class TectonicKlaviyo {
 
     private fun getProfileKey(propertyKey: String): ProfileKey {
         // Map standard attribute keys to ProfileKey constants
-        return when {
-            propertyKey == "firstName" || propertyKey == "first_name" -> ProfileKey.FIRST_NAME
-            propertyKey == "lastName" || propertyKey == "last_name" -> ProfileKey.LAST_NAME
-            propertyKey == "title" -> ProfileKey.TITLE
-            propertyKey == "organization" -> ProfileKey.ORGANIZATION
-            propertyKey == "image" -> ProfileKey.IMAGE
-            propertyKey == "address1" -> ProfileKey.ADDRESS1
-            propertyKey == "address2" -> ProfileKey.ADDRESS2
-            propertyKey == "city" -> ProfileKey.CITY
-            propertyKey == "region" -> ProfileKey.REGION
-            propertyKey == "zip" -> ProfileKey.ZIP
-            propertyKey == "country" -> ProfileKey.COUNTRY
-            propertyKey == "timezone" -> ProfileKey.TIMEZONE
-            propertyKey == "latitude" -> ProfileKey.LATITUDE
-            propertyKey == "longitude" -> ProfileKey.LONGITUDE
+        return when (propertyKey) {
+            "firstName", "first_name" -> ProfileKey.FIRST_NAME
+            "lastName", "last_name" -> ProfileKey.LAST_NAME
+            "title" -> ProfileKey.TITLE
+            "organization" -> ProfileKey.ORGANIZATION
+            "image" -> ProfileKey.IMAGE
+            "address1" -> ProfileKey.ADDRESS1
+            "address2" -> ProfileKey.ADDRESS2
+            "city" -> ProfileKey.CITY
+            "region" -> ProfileKey.REGION
+            "zip" -> ProfileKey.ZIP
+            "country" -> ProfileKey.COUNTRY
+            "timezone" -> ProfileKey.TIMEZONE
+            "latitude" -> ProfileKey.LATITUDE
+            "longitude" -> ProfileKey.LONGITUDE
             else -> ProfileKey.CUSTOM(propertyKey)
         }
     }
@@ -190,12 +193,12 @@ class TectonicKlaviyo {
         try {
             Logger.debug("Klaviyo", "Setting profile attribute: $propertyKey")
             
-            if (propertyKey.isNullOrEmpty()) {
+            if (propertyKey.isEmpty()) {
                 Logger.error("Klaviyo", "Property key cannot be null or empty", IllegalArgumentException("Property key cannot be null or empty"))
                 return
             }
             
-            if (value.isNullOrEmpty()) {
+            if (value.isEmpty()) {
                 Logger.debug("Klaviyo", "Value is null or empty, skipping profile attribute: $propertyKey")
                 return
             }
@@ -222,7 +225,7 @@ class TectonicKlaviyo {
     fun setPushToken(token: String) {
         try {
             Logger.debug("Klaviyo", "Setting push token")
-            if (!token.isNullOrEmpty()) {
+            if (token.isNotEmpty()) {
                 Klaviyo.setPushToken(token)
                 Logger.debug("Klaviyo", "Push token set successfully")
             }
@@ -342,6 +345,58 @@ class TectonicKlaviyo {
             Logger.debug("Klaviyo", "Registered for in-app forms successfully")
         } catch (e: Exception) {
             Logger.error("Klaviyo", "Failed to register for in-app forms, error: ${e.message}", e)
+        }
+    }
+
+    fun unregisterFromInAppForms() {
+        try {
+            Logger.debug("Klaviyo", "Unregistering from in-app forms")
+            Klaviyo.unregisterFromInAppForms()
+            Logger.debug("Klaviyo", "Unregistered from in-app forms successfully")
+        } catch (e: Exception) {
+            Logger.error("Klaviyo", "Failed to unregister from in-app forms, error: ${e.message}", e)
+        }
+    }
+
+    fun handleUniversalTrackingLink(trackingLink: String?, context: Context): Boolean {
+        try {
+            Logger.debug("Klaviyo", "Handling universal tracking link: $trackingLink")
+            
+            if (trackingLink.isNullOrEmpty()) {
+                Logger.debug("Klaviyo", "Tracking link is null or empty")
+                return false
+            }
+
+            // Validate Klaviyo universal tracking link format
+            // Must use HTTPS and path starts with '/u/'
+            val uri = trackingLink.toUri()
+            if (uri.scheme != "https") {
+                Logger.debug("Klaviyo", "Tracking link must use HTTPS protocol")
+                return false
+            }
+
+            val path = uri.path
+            if (path == null || !path.startsWith("/u/")) {
+                Logger.debug("Klaviyo", "Tracking link path must start with '/u/'")
+                return false
+            }
+
+            // Create an intent to handle the link
+            // The Klaviyo SDK may handle this internally, but we'll use Android's Intent system
+            // to open the resolved URL
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+                Logger.debug("Klaviyo", "Successfully handled universal tracking link")
+                return true
+            } catch (e: Exception) {
+                Logger.error("Klaviyo", "Failed to start activity for tracking link, error: ${e.message}", e)
+                return false
+            }
+        } catch (e: Exception) {
+            Logger.error("Klaviyo", "Failed to handle universal tracking link, error: ${e.message}", e)
+            return false
         }
     }
     
