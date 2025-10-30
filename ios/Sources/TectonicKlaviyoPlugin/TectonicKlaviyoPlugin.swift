@@ -10,14 +10,16 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "TectonicKlaviyoPlugin"
     public let jsName = "TectonicKlaviyo"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "echo", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "initialize", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = TectonicKlaviyo()
 
-    @objc func echo(_ call: CAPPluginCall) {
-        let value = call.getString("value") ?? ""
-        call.resolve([
-            "value": implementation.echo(value)
-        ])
+    @objc func initialize(_ call: CAPPluginCall) {
+        guard let apiKey = call.getString("apiKey"), !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            call.reject("apiKey is required")
+            return
+        }
+        implementation.initialize(apiKey: apiKey)
+        call.resolve()
     }
 }
