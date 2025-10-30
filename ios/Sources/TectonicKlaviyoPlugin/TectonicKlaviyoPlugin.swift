@@ -10,7 +10,8 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "TectonicKlaviyoPlugin"
     public let jsName = "TectonicKlaviyo"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "initialize", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "initialize", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setProfile", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = TectonicKlaviyo()
 
@@ -20,6 +21,12 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
         implementation.initialize(apiKey: apiKey)
+        call.resolve()
+    }
+
+    @objc func setProfile(_ call: CAPPluginCall) {
+        let dict = call.options as? [String: Any] ?? [:]
+        implementation.setProfile(dict)
         call.resolve()
     }
 }
