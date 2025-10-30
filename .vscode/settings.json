@@ -1,3 +1,10 @@
 {
-  "cSpell.ignoreWords": ["Klaviyo", "podspec", "swiftlint"]
+  "cSpell.ignoreWords": ["Klaviyo", "podspec", "swiftlint"],
+  "typescript.tsdk": "./node_modules/typescript/lib",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit",
+    "soruce.addMissingImports": "explicit"
+  },
+  "java.configuration.updateBuildConfiguration": "disabled"
 }
