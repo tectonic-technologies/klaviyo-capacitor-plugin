@@ -19,7 +19,8 @@ let package = Package(
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
-                .product(name: "KlaviyoSwift", package: "klaviyo-swift-sdk")
+                .product(name: "KlaviyoSwift", package: "klaviyo-swift-sdk"),
+                .product(name: "KlaviyoForms", package: "klaviyo-swift-sdk")
             ],
             path: "ios/Sources/TectonicKlaviyoPlugin"),
         .testTarget(

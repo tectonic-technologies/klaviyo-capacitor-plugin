@@ -23,7 +23,9 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setPushToken", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getPushToken", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setBadgeCount", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "createEvent", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "createEvent", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "registerForInAppForms", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "unregisterFromInAppForms", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = TectonicKlaviyo()
 
@@ -131,6 +133,17 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func createEvent(_ call: CAPPluginCall) {
         let payload = call.options as? [String: Any] ?? [:]
         implementation.createEvent(payload)
+        call.resolve()
+    }
+
+    @MainActor @objc func registerForInAppForms(_ call: CAPPluginCall) {
+        let configuration = (call.getObject("configuration"))
+        implementation.registerForInAppForms(configuration)
+        call.resolve()
+    }
+
+    @MainActor @objc func unregisterFromInAppForms(_ call: CAPPluginCall) {
+        implementation.unregisterFromInAppForms()
         call.resolve()
     }
 }

@@ -1,5 +1,6 @@
 import Foundation
 import KlaviyoSwift
+import KlaviyoForms
 
 @objc public class TectonicKlaviyo: NSObject {
     @objc public func initialize(apiKey: String) {
@@ -239,5 +240,27 @@ import KlaviyoSwift
                                value: valueDouble,
                                uniqueId: finalUniqueId)
         KlaviyoSDK().create(event: eventModel)
+    }
+
+    @MainActor @objc public func registerForInAppForms(_ configuration: [String: Any]?) {
+        if let config = configuration {
+            var timeoutSeconds: TimeInterval?
+            if let intVal = config["sessionTimeoutDuration"] as? Int {
+                timeoutSeconds = TimeInterval(intVal)
+            } else if let doubleVal = config["sessionTimeoutDuration"] as? Double {
+                timeoutSeconds = TimeInterval(doubleVal)
+            }
+
+            if let timeout = timeoutSeconds {
+                let formsConfig = InAppFormsConfig(sessionTimeoutDuration: timeout)
+                KlaviyoSDK().registerForInAppForms(configuration: formsConfig)
+                return
+            }
+        }
+        KlaviyoSDK().registerForInAppForms()
+    }
+
+    @MainActor @objc public func unregisterFromInAppForms() {
+        KlaviyoSDK().unregisterFromInAppForms()
     }
 }
