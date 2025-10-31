@@ -1,3 +1,5 @@
+import type { Plugin } from '@capacitor/core';
+
 // Events emitted by the native plugin
 type TectonicKlaviyoEvent = 'klaviyoDeepLink';
 
@@ -137,7 +139,7 @@ type KlaviyoEvent = {
   properties?: KlaviyoEventProperties;
 };
 
-type TectonicKlaviyoPlugin = {
+interface TectonicKlaviyoPlugin extends Plugin {
   /**
    * Initializes the Klaviyo SDK with the given API key.
    * @param options - Contains the public API key
@@ -252,7 +254,7 @@ type TectonicKlaviyoPlugin = {
   }): Promise<{ handled: boolean }>;
 
   /**
-   * Register a deep link handler. The plugin will emit a `deepLink` event
+   * Register a deep link handler. The plugin will emit a `klaviyoDeepLink` event
    * with payload `{ uri: string }` whenever the SDK provides a deep link
    * from push, forms, or universal tracking links.
    */
@@ -262,7 +264,7 @@ type TectonicKlaviyoPlugin = {
    * Unregister the native deep link handler.
    */
   unregisterDeepLinkHandler(): Promise<void>;
-};
+}
 
 export type {
   KlaviyoEvent,

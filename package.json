@@ -13,7 +13,8 @@
     "ios/Sources",
     "ios/Tests",
     "Package.swift",
-    "KlaviyoCapacitorPlugin.podspec"
+    "KlaviyoCapacitorPlugin.podspec",
+    "TectonicTechnologiesKlaviyoCapacitorPlugin.podspec"
   ],
   "author": "Tectonic Technologies",
   "license": "MIT",
