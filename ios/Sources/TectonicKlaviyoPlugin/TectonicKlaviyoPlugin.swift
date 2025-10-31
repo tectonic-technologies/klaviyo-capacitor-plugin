@@ -25,7 +25,10 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setBadgeCount", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "createEvent", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "registerForInAppForms", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "unregisterFromInAppForms", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "unregisterFromInAppForms", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "registerDeepLinkHandler", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "unregisterDeepLinkHandler", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "handleUniversalTrackingLink", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = TectonicKlaviyo()
 
@@ -145,5 +148,30 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
     @MainActor @objc func unregisterFromInAppForms(_ call: CAPPluginCall) {
         implementation.unregisterFromInAppForms()
         call.resolve()
+    }
+
+    @objc func registerDeepLinkHandler(_ call: CAPPluginCall) {
+        implementation.registerDeepLinkHandler { [weak self] url in
+            // Emit event to JavaScript with the deep link URL
+            let payload: [String: Any] = ["uri": url.absoluteString]
+            self?.notifyListeners("klaviyoDeepLink", data: payload)
+        }
+        call.resolve()
+    }
+
+    @objc func unregisterDeepLinkHandler(_ call: CAPPluginCall) {
+        implementation.unregisterDeepLinkHandler()
+        call.resolve()
+    }
+
+    @objc func handleUniversalTrackingLink(_ call: CAPPluginCall) {
+        guard let trackingLink = call.getString("trackingLink"),
+              let url = URL(string: trackingLink) else {
+            call.reject("trackingLink is required and must be a valid URL")
+            return
+        }
+        
+        let handled = implementation.handleUniversalTrackingLink(url)
+        call.resolve(["handled": handled])
     }
 }

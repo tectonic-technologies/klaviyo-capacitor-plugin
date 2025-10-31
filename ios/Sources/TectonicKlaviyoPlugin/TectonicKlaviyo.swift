@@ -263,4 +263,19 @@ import KlaviyoForms
     @MainActor @objc public func unregisterFromInAppForms() {
         KlaviyoSDK().unregisterFromInAppForms()
     }
+
+    // Swift-only method (not @objc) to register deep link handler with a closure
+    public func registerDeepLinkHandler(handler: @escaping (URL) -> Void) {
+        KlaviyoSDK().registerDeepLinkHandler { url in
+            handler(url)
+        }
+    }
+
+    @objc public func unregisterDeepLinkHandler() {
+        KlaviyoSDK().unregisterDeepLinkHandler()
+    }
+
+    @objc public func handleUniversalTrackingLink(_ url: URL) -> Bool {
+        return KlaviyoSDK().handleUniversalTrackingLink(url)
+    }
 }
