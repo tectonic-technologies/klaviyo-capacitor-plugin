@@ -1,5 +1,28 @@
 import type { Plugin } from '@capacitor/core';
 
+/**
+ * Common clientside event metrics recognized by Klaviyo.
+ * Custom metrics can be defined by using any string value not in this enum.
+ */
+enum KlaviyoEventMetric {
+  /**
+   * Metric for when the app is opened
+   */
+  OPENED_APP = 'Opened App',
+  /**
+   * Metric for when a product is viewed
+   */
+  VIEWED_PRODUCT = 'Viewed Product',
+  /**
+   * Metric for when an item is added to cart
+   */
+  ADDED_TO_CART = 'Added to Cart',
+  /**
+   * Metric for when checkout is started
+   */
+  STARTED_CHECKOUT = 'Started Checkout'
+}
+
 // Events emitted by the native plugin
 type TectonicKlaviyoEvent = 'klaviyoDeepLink';
 
@@ -265,6 +288,8 @@ interface TectonicKlaviyoPlugin extends Plugin {
    */
   unregisterDeepLinkHandler(): Promise<void>;
 }
+
+export { KlaviyoEventMetric };
 
 export type {
   KlaviyoEvent,
