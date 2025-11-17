@@ -11,6 +11,7 @@ import com.klaviyo.analytics.model.ProfileKey
 import com.klaviyo.forms.InAppFormsConfig
 import com.klaviyo.forms.registerForInAppForms
 import com.klaviyo.forms.unregisterFromInAppForms
+import java.io.Serializable
 import android.content.Intent
 import android.net.Uri
 import kotlin.time.Duration.Companion.seconds
@@ -249,6 +250,55 @@ class TectonicKlaviyo {
         Logger.warn("Klaviyo", "setBadgeCount is not supported on Android (iOS only)")
     }
 
+    /**
+     * Recursively converts JSObject/JSONArray to HashMap/ArrayList (Serializable types)
+     * Similar to React Native SDK's ReadableMap.toHashMap() approach
+     */
+    private fun convertToSerializable(value: Any?): Any? {
+        return when (value) {
+            is org.json.JSONObject -> {
+                val map = java.util.HashMap<String, Any?>()
+                val keys = value.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    map[key] = convertToSerializable(value.get(key))
+                }
+                map
+            }
+            is org.json.JSONArray -> {
+                val list = java.util.ArrayList<Any?>()
+                for (i in 0 until value.length()) {
+                    list.add(convertToSerializable(value.get(i)))
+                }
+                list
+            }
+            is Map<*, *> -> {
+                val map = java.util.HashMap<String, Any?>()
+                for ((k, v) in value) {
+                    map[k.toString()] = convertToSerializable(v)
+                }
+                map
+            }
+            is List<*> -> {
+                val list = java.util.ArrayList<Any?>()
+                for (item in value) {
+                    list.add(convertToSerializable(item))
+                }
+                list
+            }
+            is String, is Number, is Boolean -> value
+            null -> null
+            else -> {
+                // Try to convert unknown types
+                if (value is java.io.Serializable) {
+                    value
+                } else {
+                    value.toString()
+                }
+            }
+        }
+    }
+
     fun createEvent(eventData: JSObject) {
         try {
             // Event name is required
@@ -257,93 +307,67 @@ class TectonicKlaviyo {
                 Logger.error("Klaviyo", "Event name is required", IllegalArgumentException("Event name is required"))
                 return
             }
-            
-            // Create event with name (using String constructor)
-            val event = Event(eventName)
-            
-            // Add value if present
-            if (eventData.has("value")) {
-                val valueObj = eventData.getDouble("value")
-                event.setProperty(EventKey.VALUE, valueObj)
-            }
-            
-            // Add uniqueId if present
-            if (eventData.has("uniqueId")) {
-                val uniqueId = eventData.getString("uniqueId")
-                if (!uniqueId.isNullOrEmpty()) {
-                    event.setProperty(EventKey.EVENT_ID, uniqueId)
-                }
-            }
-            
-            // Add properties if present
-            if (eventData.has("properties")) {
+
+            // Convert properties to HashMap (like React Native SDK does)
+            val propertiesMap: Map<EventKey, Serializable>? = if (eventData.has("properties")) {
                 try {
                     val properties = eventData.getJSObject("properties")
                     if (properties != null) {
+                        val hashMap = java.util.HashMap<String, Any?>()
                         val keysIterator = properties.keys()
                         while (keysIterator.hasNext()) {
                             val key = keysIterator.next()
                             if (!key.isNullOrEmpty()) {
                                 try {
                                     val value = properties.get(key)
-                                    // Convert value to Serializable if needed
-                                    val serializableValue: Any? = when (value) {
-                                        is org.json.JSONArray -> value
-                                        is org.json.JSONObject -> value
-                                        is String -> value
-                                        is Number -> value
-                                        is Boolean -> value
-                                        null -> null
-                                        else -> {
-                                            // Try to convert to JSON if it's a Map or List
-                                            try {
-                                                when (value) {
-                                                    is Map<*, *> -> {
-                                                        val jsonObj = org.json.JSONObject()
-                                                        for ((k, v) in value) {
-                                                            jsonObj.put(k.toString(), v)
-                                                        }
-                                                        jsonObj
-                                                    }
-                                                    is List<*> -> {
-                                                        val jsonArray = org.json.JSONArray()
-                                                        for (item in value) {
-                                                            jsonArray.put(item)
-                                                        }
-                                                        jsonArray
-                                                    }
-                                                    else -> value.toString()
-                                                }
-                                            } catch (e: Exception) {
-                                                Logger.debug("Klaviyo", "Failed to convert property value for key: $key, using string representation, error: ${e.message}")
-                                                value.toString()
-                                            }
-                                        }
-                                    }
-                                    
-                                    // Set property - JSONArray and JSONObject are Serializable, as are primitives
-                                    if (serializableValue != null) {
-                                        if (serializableValue is java.io.Serializable) {
-                                            event.setProperty(key, serializableValue)
-                                        } else {
-                                            // Fallback: convert to string if not Serializable
-                                            val stringValue = serializableValue.toString()
-                                            event.setProperty(key, stringValue)
-                                        }
+                                    val serializableValue = convertToSerializable(value)
+                                    if (serializableValue is java.io.Serializable) {
+                                        hashMap[key] = serializableValue
                                     }
                                 } catch (e: org.json.JSONException) {
                                     Logger.debug("Klaviyo", "Failed to get property value for key: $key, error: ${e.message}")
                                 }
                             }
                         }
+                        hashMap
+                            .filter { (_, value) -> value is Serializable }
+                            .map { (key, value) -> EventKey.CUSTOM(key) to value as Serializable }
+                            .toMap<EventKey, Serializable>()
+                            .takeIf { it.isNotEmpty() }
+                    } else {
+                        null
                     }
                 } catch (e: Exception) {
                     Logger.error("Klaviyo", "Failed to process event properties, error: ${e.message}", e)
+                    null
+                }
+            } else {
+                null
+            }
+
+            // Create event with properties (like React Native SDK does)
+            val event = Event(eventName, propertiesMap)
+
+            // Add value if present
+            if (eventData.has("value")) {
+                try {
+                    val valueObj = eventData.getDouble("value")
+                    event.setValue(valueObj)
+                } catch (e: Exception) {
+                    Logger.error("Klaviyo", "Error setting event value", e)
                 }
             }
-            
-            // Track the event
-            Klaviyo.createEvent(event)
+
+            // Add uniqueId if present
+            if (eventData.has("uniqueId")) {
+                val uniqueId = eventData.getString("uniqueId")
+                if (!uniqueId.isNullOrEmpty()) {
+                    event.setUniqueId(uniqueId)
+                }
+            }
+
+            // Track the event - explicitly pass Event object to avoid ambiguity
+            Klaviyo.createEvent(event = event)
         } catch (e: Exception) {
             Logger.error("Klaviyo", "Failed to create event, error: ${e.message}", e)
         }
