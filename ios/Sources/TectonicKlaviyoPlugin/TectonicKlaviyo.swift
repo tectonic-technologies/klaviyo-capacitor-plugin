@@ -213,16 +213,8 @@ import KlaviyoForms
             for (k, v) in props {
                 let key = k.trimmingCharacters(in: .whitespacesAndNewlines)
                 if key.isEmpty { continue }
-                switch v {
-                case let s as String where !s.isEmpty:
-                    finalProperties[key] = s
-                case let n as NSNumber:
-                    finalProperties[key] = n
-                case let b as Bool:
-                    finalProperties[key] = b
-                default:
-                    continue
-                }
+                // Include all values: primitives, arrays, and objects
+                finalProperties[key] = v
             }
         }
 
@@ -239,6 +231,7 @@ import KlaviyoForms
                                properties: finalProperties.isEmpty ? nil : finalProperties,
                                value: valueDouble,
                                uniqueId: finalUniqueId)
+        
         KlaviyoSDK().create(event: eventModel)
     }
 

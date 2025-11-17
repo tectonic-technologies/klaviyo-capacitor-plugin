@@ -19,6 +19,12 @@
       <label for="apiKeyInput">API Key:</label>
       <input type="text" id="apiKeyInput" name="apiKeyInput" placeholder="Enter your Klaviyo API Key" value="X44FBX" />
       <button onclick="initializeKlaviyo()">Initialize Klaviyo</button>
+      
+      <hr style="margin: 20px 0;" />
+      
+      <h2>Test Event with Arrays and Objects</h2>
+      <p>This will send an "Added to Cart" event with arrays and objects in the properties to test that non-primitive values are not dropped.</p>
+      <button onclick="testAddedToCartEvent()">Test Added to Cart Event</button>
     </main>
 
     <script src="./js/example.js" type="module"></script>

@@ -251,8 +251,6 @@ class TectonicKlaviyo {
 
     fun createEvent(eventData: JSObject) {
         try {
-            Logger.debug("Klaviyo", "Creating event")
-            
             // Event name is required
             val eventName = eventData.getString("name")
             if (eventName.isNullOrEmpty()) {
@@ -266,7 +264,6 @@ class TectonicKlaviyo {
             // Add value if present
             if (eventData.has("value")) {
                 val valueObj = eventData.getDouble("value")
-                // Use setProperty with EventKey.VALUE
                 event.setProperty(EventKey.VALUE, valueObj)
             }
             
@@ -274,7 +271,6 @@ class TectonicKlaviyo {
             if (eventData.has("uniqueId")) {
                 val uniqueId = eventData.getString("uniqueId")
                 if (!uniqueId.isNullOrEmpty()) {
-                    // Use setProperty with EventKey.EVENT_ID
                     event.setProperty(EventKey.EVENT_ID, uniqueId)
                 }
             }
@@ -290,10 +286,50 @@ class TectonicKlaviyo {
                             if (!key.isNullOrEmpty()) {
                                 try {
                                     val value = properties.get(key)
-                                    // setProperty expects Serializable
-                                    if (value is java.io.Serializable) {
-                                        // Use setProperty with String key (will be converted to EventKey.CUSTOM)
-                                        event.setProperty(key, value)
+                                    // Convert value to Serializable if needed
+                                    val serializableValue: Any? = when (value) {
+                                        is org.json.JSONArray -> value
+                                        is org.json.JSONObject -> value
+                                        is String -> value
+                                        is Number -> value
+                                        is Boolean -> value
+                                        null -> null
+                                        else -> {
+                                            // Try to convert to JSON if it's a Map or List
+                                            try {
+                                                when (value) {
+                                                    is Map<*, *> -> {
+                                                        val jsonObj = org.json.JSONObject()
+                                                        for ((k, v) in value) {
+                                                            jsonObj.put(k.toString(), v)
+                                                        }
+                                                        jsonObj
+                                                    }
+                                                    is List<*> -> {
+                                                        val jsonArray = org.json.JSONArray()
+                                                        for (item in value) {
+                                                            jsonArray.put(item)
+                                                        }
+                                                        jsonArray
+                                                    }
+                                                    else -> value.toString()
+                                                }
+                                            } catch (e: Exception) {
+                                                Logger.debug("Klaviyo", "Failed to convert property value for key: $key, using string representation, error: ${e.message}")
+                                                value.toString()
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Set property - JSONArray and JSONObject are Serializable, as are primitives
+                                    if (serializableValue != null) {
+                                        if (serializableValue is java.io.Serializable) {
+                                            event.setProperty(key, serializableValue)
+                                        } else {
+                                            // Fallback: convert to string if not Serializable
+                                            val stringValue = serializableValue.toString()
+                                            event.setProperty(key, stringValue)
+                                        }
                                     }
                                 } catch (e: org.json.JSONException) {
                                     Logger.debug("Klaviyo", "Failed to get property value for key: $key, error: ${e.message}")
@@ -308,7 +344,6 @@ class TectonicKlaviyo {
             
             // Track the event
             Klaviyo.createEvent(event)
-            Logger.debug("Klaviyo", "Event created successfully: $eventName")
         } catch (e: Exception) {
             Logger.error("Klaviyo", "Failed to create event, error: ${e.message}", e)
         }
