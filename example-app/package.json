@@ -12,7 +12,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "android": "npm run build && npx cap run android --target=Pixel_9_Pro",
-    "ios": "npm run build && npx cap run ios --target=050732D3-CBCA-42F6-A8BD-DD8A487027F1"
+    "ios": "npm run build && npx cap run ios --target=673B8ED9-C910-4478-9A44-5F611205CF25"
   },
   "dependencies": {
     "@capacitor/core": "latest",
