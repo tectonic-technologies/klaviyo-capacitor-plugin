@@ -31,6 +31,35 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "handleUniversalTrackingLink", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = TectonicKlaviyo()
+    
+    // Store the latest deep link that arrives before handler is registered
+    private var pendingDeepLink: URL?
+    private var isHandlerRegistered = false
+    private var isKlaviyoSDKHandlerRegistered = false
+    private let stateLock = NSLock()
+    
+    public override func load() {
+        // Register Klaviyo SDK handler early to capture deep links even when app is killed
+        // This ensures we don't miss deep links that arrive before JavaScript initializes
+        implementation.registerDeepLinkHandler { [weak self] url in
+            self?.handleKlaviyoDeepLink(url)
+        }
+        isKlaviyoSDKHandlerRegistered = true
+    }
+    
+    private func handleKlaviyoDeepLink(_ url: URL) {
+        stateLock.lock()
+        if isHandlerRegistered {
+            // Handler is registered, emit immediately
+            let payload: [String: Any] = ["uri": url.absoluteString]
+            stateLock.unlock()
+            notifyListeners("klaviyoDeepLink", data: payload)
+        } else {
+            // Handler not registered yet, store the latest link
+            pendingDeepLink = url
+            stateLock.unlock()
+        }
+    }
 
     @objc func initialize(_ call: CAPPluginCall) {
         guard let apiKey = call.getString("apiKey"), !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -151,16 +180,38 @@ public class TectonicKlaviyoPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func registerDeepLinkHandler(_ call: CAPPluginCall) {
-        implementation.registerDeepLinkHandler { [weak self] url in
-            // Emit event to JavaScript with the deep link URL
-            let payload: [String: Any] = ["uri": url.absoluteString]
-            self?.notifyListeners("klaviyoDeepLink", data: payload)
+        stateLock.lock()
+        let queuedLink = pendingDeepLink
+        pendingDeepLink = nil
+        isHandlerRegistered = true
+        stateLock.unlock()
+        
+        // Re-register with Klaviyo SDK if it was previously unregistered
+        if !isKlaviyoSDKHandlerRegistered {
+            implementation.registerDeepLinkHandler { [weak self] url in
+                self?.handleKlaviyoDeepLink(url)
+            }
+            isKlaviyoSDKHandlerRegistered = true
         }
+        
+        // Process the latest deep link that arrived before JavaScript handler was registered
+        if let url = queuedLink {
+            let payload: [String: Any] = ["uri": url.absoluteString]
+            notifyListeners("klaviyoDeepLink", data: payload)
+        }
+        
         call.resolve()
     }
 
     @objc func unregisterDeepLinkHandler(_ call: CAPPluginCall) {
+        stateLock.lock()
+        isHandlerRegistered = false
+        pendingDeepLink = nil
+        stateLock.unlock()
+        
+        // Unregister from Klaviyo SDK - deep links will be lost until re-registered
         implementation.unregisterDeepLinkHandler()
+        isKlaviyoSDKHandlerRegistered = false
         call.resolve()
     }
 
